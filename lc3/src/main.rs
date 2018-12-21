@@ -74,10 +74,10 @@ fn main() {
             Some(Opcodes::LDR) => unimplemented!(),
             Some(Opcodes::STR) => unimplemented!(),
             Some(Opcodes::RTI) => unimplemented!(),
-            Some(Opcodes::NOT) => unimplemented!(),
+            Some(Opcodes::NOT) => not(instr, &mut reg),
             Some(Opcodes::LDI) => unimplemented!(),
             Some(Opcodes::STI) => unimplemented!(),
-            Some(Opcodes::JMP) => unimplemented!(),
+            Some(Opcodes::JMP) => jmp(instr, &mut reg),
             Some(Opcodes::RES) => unimplemented!(),
             Some(Opcodes::LEA) => unimplemented!(),
             Some(Opcodes::TRAP) => unimplemented!(),
@@ -121,6 +121,21 @@ fn and(instr: u16, reg: &mut [u16]) {
         reg[r0 as usize] = reg[r1 as usize] & reg[r2 as usize];
     }
     update_flags(r0, reg);
+}
+
+fn not(instr: u16, reg: &mut [u16]) {
+    /* destination register (DR) */
+    let r0: u16 = (instr >> 9) & 0x7;
+    /* first operand (SR1) */
+    let r1: u16 = (instr >> 6) & 0x7;
+
+    reg[r0 as usize] = !reg[r1 as usize];    
+    update_flags(r0, reg);
+}
+
+fn jmp(instr: u16, reg: &mut [u16]) {
+    let r1: u16 = (instr >> 6) & 0x7;
+    load!(reg, Registers::PC) = reg[r1 as usize];
 }
 
 fn update_flags(r: u16, reg: &mut [u16]) {
