@@ -75,7 +75,7 @@ fn main() {
             Some(Opcodes::STR) => unimplemented!(),
             Some(Opcodes::RTI) => unimplemented!(),
             Some(Opcodes::NOT) => not(instr, &mut reg),
-            Some(Opcodes::LDI) => unimplemented!(),
+            Some(Opcodes::LDI) => ldi(instr, &mut reg, &mut memory),
             Some(Opcodes::STI) => unimplemented!(),
             Some(Opcodes::JMP) => jmp(instr, &mut reg),
             Some(Opcodes::RES) => unimplemented!(),
@@ -123,20 +123,36 @@ fn and(instr: u16, reg: &mut [u16]) {
     update_flags(r0, reg);
 }
 
+fn jmp(instr: u16, reg: &mut [u16]) {
+    let r1: u16 = (instr >> 6) & 0x7;
+    load!(reg, Registers::PC) = reg[r1 as usize];
+}
+
+fn ldi(instr: u16, reg: &mut [u16], memory: &mut [u16]) {
+    let r0 = (instr >> 9) & 0x7;
+    let offset = extend(instr & 0x1FF, 9);
+    reg[r0 as usize] = mem_read(mem_read(load!(reg, Registers::PC), memory), memory);
+    update_flags(r0, reg);
+}
+
+fn lea(instr: u16, reg: &mut [u16]) {
+    let r0 = (instr >> 9) & 0x7;
+    let offset = extend(instr & 0x1FF, 9);
+    reg[r0 as usize] = load!(reg, Registers::PC) + offset;
+    update_flags(r0, reg);
+}
+
 fn not(instr: u16, reg: &mut [u16]) {
     /* destination register (DR) */
-    let r0: u16 = (instr >> 9) & 0x7;
+    let r0 = (instr >> 9) & 0x7;
     /* first operand (SR1) */
-    let r1: u16 = (instr >> 6) & 0x7;
+    let r1 = (instr >> 6) & 0x7;
 
     reg[r0 as usize] = !reg[r1 as usize];    
     update_flags(r0, reg);
 }
 
-fn jmp(instr: u16, reg: &mut [u16]) {
-    let r1: u16 = (instr >> 6) & 0x7;
-    load!(reg, Registers::PC) = reg[r1 as usize];
-}
+
 
 fn update_flags(r: u16, reg: &mut [u16]) {
     if reg[r as usize] == 0 { 
